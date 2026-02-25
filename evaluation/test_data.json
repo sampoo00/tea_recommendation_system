@@ -1,0 +1,18 @@
+[
+  {
+    "query": "I want something citrusy and bold.",
+    "expected_names": ["Earl Grey"]
+  },
+  {
+    "query": "Looking for a floral green tea.",
+    "expected_names": ["Jasmine Dragon Pearls"]
+  },
+  {
+    "query": "Something to help me sleep, no caffeine.",
+    "expected_names": ["Chamomile Dream"]
+  },
+  {
+    "query": "I like spicy teas with cinnamon.",
+    "expected_names": ["Masala Chai"]
+  }
+]

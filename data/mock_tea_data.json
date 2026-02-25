@@ -1,0 +1,42 @@
+[
+  {
+    "id": "tea_001",
+    "name": "Earl Grey",
+    "type": "Black",
+    "flavors": ["Citrus", "Bergamot", "Bold"],
+    "description": "A classic black tea infused with the oil of bergamot orange for a distinctive citrus flavor.",
+    "caffeine": "High"
+  },
+  {
+    "id": "tea_002",
+    "name": "Jasmine Dragon Pearls",
+    "type": "Green",
+    "flavors": ["Floral", "Sweet", "Delicate"],
+    "description": "Hand-rolled green tea pearls scented with fresh jasmine blossoms.",
+    "caffeine": "Medium"
+  },
+  {
+    "id": "tea_003",
+    "name": "Chamomile Dream",
+    "type": "Herbal",
+    "flavors": ["Apple-like", "Calming", "Floral"],
+    "description": "A soothing herbal infusion made from whole chamomile flowers. Naturally caffeine-free.",
+    "caffeine": "None"
+  },
+  {
+    "id": "tea_004",
+    "name": "Masala Chai",
+    "type": "Black",
+    "flavors": ["Spicy", "Warm", "Cinnamon", "Cardamom"],
+    "description": "A robust black tea blended with traditional Indian spices like ginger, cardamom, and cinnamon.",
+    "caffeine": "High"
+  },
+  {
+    "id": "tea_005",
+    "name": "Silver Needle",
+    "type": "White",
+    "flavors": ["Honeysuckle", "Sweet", "Light"],
+    "description": "The rarest and finest white tea, consisting only of tender buds. Very light and delicate.",
+    "caffeine": "Low"
+  }
+]
