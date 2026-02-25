@@ -70,7 +70,10 @@ TeaBot:"""
             json={
                 "model": self.model,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                    "temperature": 0
+                }
             }
         )
         response.raise_for_status()

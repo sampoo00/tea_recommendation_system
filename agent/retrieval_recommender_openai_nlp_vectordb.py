@@ -111,7 +111,8 @@ Response:"""
                 messages=[
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": prompt}
-                ]
+                ],
+                temperature=0
             )
             return response.choices[0].message.content
         except Exception as e:

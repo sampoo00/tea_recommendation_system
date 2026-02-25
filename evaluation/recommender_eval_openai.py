@@ -30,6 +30,7 @@ def evaluate():
     total = len(test_data)
     correct_count = 0
     all_match_similarities = []
+    prediction_rates = []
     
     print(f"Evaluating OpenAI VectorDB Recommender (N={recommender.retrieval_n}) on {total} samples...")
     
@@ -50,6 +51,9 @@ def evaluate():
         retrieved_info = {} # name -> similarity
         for meta, dist in zip(retrieved_metas, distances):
             retrieved_info[meta['name']] = 1.0 - dist
+
+        # Top similarity for prediction rate calculation if no match
+        top_similarity = max(retrieved_info.values()) if retrieved_info else 0.0
 
         # 2. Get LLM recommendation using evaluation context
         response_str = recommender.recommend(query)
@@ -73,20 +77,24 @@ def evaluate():
         
         if case_match_found:
             correct_count += 1
+            prediction_rates.append(1.0)
+        else:
+            prediction_rates.append(top_similarity)
         
         print(f"Query: {query}")
         print(f"  Expected: {expected}")
         print(f"  LLM Output: {llm_output_names}")
-        print(f"  Similarities of LLM Output: {[retrieved_info.get(n, 0.0) for n in llm_output_names]}")
-        print(f"  Match: {'Yes' if case_match_found else 'No'}")
+        print(f"  Match: {'Yes' if case_match_found else 'No'} (Rate: {prediction_rates[-1]:.4f})")
         print("-" * 20)
     
     precision = (correct_count / total) * 100
     avg_similarity = np.mean(all_match_similarities) if all_match_similarities else 0.0
+    avg_prediction_rate = np.mean(prediction_rates) if prediction_rates else 0.0
     
     print(f"Evaluation Complete.")
     print(f"Precision@{recommender.retrieval_n}: {precision:.2f}% ({correct_count}/{total})")
     print(f"Average Similarity of Matched Items: {avg_similarity:.4f}")
+    print(f"Overall Prediction Rate: {avg_prediction_rate:.4f}")
 
 if __name__ == "__main__":
     evaluate()
