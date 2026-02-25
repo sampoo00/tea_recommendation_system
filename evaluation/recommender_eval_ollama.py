@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-import requests
+import numpy as np
 
 # Add project root to path to import agent
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,10 +16,8 @@ def load_eval_context():
 
 def evaluate():
     try:
-        # Initialize the VectorDB based recommender
         recommender = TeaChromaRecommender()
         recommender.build_vectordb()
-        # Override system context for evaluation (JSON output)
         recommender.system_context = load_eval_context()
     except Exception as e:
         print(f"Failed to initialize recommender: {e}")
@@ -30,7 +28,8 @@ def evaluate():
         test_data = json.load(f)
     
     total = len(test_data)
-    correct = 0
+    correct_count = 0
+    all_match_similarities = []
     
     print(f"Evaluating Ollama VectorDB Recommender (N={recommender.retrieval_n}) on {total} samples...")
     
@@ -38,32 +37,58 @@ def evaluate():
         query = item['query']
         expected = item['expected_names']
         
-        # Get recommendation (should be JSON string due to eval context)
+        # 1. Manually perform retrieval to get similarity scores
+        query_embedding = recommender.get_ollama_embedding(query, is_query=True)
+        results = recommender.collection.query(
+            query_embeddings=[query_embedding],
+            n_results=recommender.retrieval_n
+        )
+        
+        # ChromaDB 'cosine' distance is 1 - similarity
+        retrieved_metas = results['metadatas'][0]
+        distances = results['distances'][0]
+        retrieved_info = {} # name -> similarity
+        for meta, dist in zip(retrieved_metas, distances):
+            retrieved_info[meta['name']] = 1.0 - dist
+
+        # 2. Get LLM recommendation using evaluation context
         response_str = recommender.recommend(query)
         
         try:
-            # Parse the JSON response
-            retrieved_names = json.loads(response_str)
-            if not isinstance(retrieved_names, list):
-                retrieved_names = [str(retrieved_names)]
+            llm_output_names = json.loads(response_str)
+            if not isinstance(llm_output_names, list):
+                llm_output_names = [str(llm_output_names)]
         except:
-            # Fallback if LLM fails to output valid JSON
-            retrieved_names = [response_str.strip()]
+            llm_output_names = [response_str.strip()]
         
-        # Success if any expected name is in the retrieved results
-        is_correct = any(exp in retrieved_names for exp in expected)
-        if is_correct:
-            correct += 1
+        # 3. Calculate matches and collect similarities
+        case_match_found = False
+        current_case_similarities = []
+        
+        for name in llm_output_names:
+            if name in expected:
+                case_match_found = True
+                # Get the similarity score for this matched tea
+                score = retrieved_info.get(name, 0.0)
+                all_match_similarities.append(score)
+                current_case_similarities.append(score)
+        
+        if case_match_found:
+            correct_count += 1
         
         print(f"Query: {query}")
         print(f"  Expected: {expected}")
-        print(f"  Retrieved: {retrieved_names}")
-        print(f"  Match: {'Yes' if is_correct else 'No'}")
+        print(f"  LLM Output: {llm_output_names}")
+        print(f"  Similarities of LLM Output: {[retrieved_info.get(n, 0.0) for n in llm_output_names]}")
+        print(f"  Match: {'Yes' if case_match_found else 'No'}")
         print("-" * 20)
     
-    precision = (correct / total) * 100
+    precision = (correct_count / total) * 100
+    avg_similarity = np.mean(all_match_similarities) if all_match_similarities else 0.0
+    
     print(f"Evaluation Complete.")
-    print(f"Precision@{recommender.retrieval_n}: {precision:.2f}% ({correct}/{total})")
+    print(f"Precision@{recommender.retrieval_n}: {precision:.2f}% ({correct_count}/{total})")
+    print(f"Average Similarity of Matched Items: {avg_similarity:.4f}")
 
 if __name__ == "__main__":
     evaluate()
