@@ -10,6 +10,7 @@ class TeaEmbeddingSearcher:
     def __init__(self):
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/ollama/tea_data_with_embeddings.json'
         self.teas = self._load_data()
 
@@ -67,7 +68,7 @@ def main():
             if user_input.lower() in ['exit', 'quit']:
                 break
             
-            recommendations = searcher.search(user_input)
+            recommendations = searcher.search(user_input, top_k=searcher.retrieval_n)
             
             print("\nTop Recommendations:")
             for i, rec in enumerate(recommendations, 1):

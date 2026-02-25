@@ -9,6 +9,7 @@ class TeaRecommenderOllamaNLP:
     def __init__(self):
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
 
@@ -31,9 +32,8 @@ class TeaRecommenderOllamaNLP:
 User Preference: "{user_query}"
 
 Task:
-1. Identify the best matching tea from the list above.
-2. Explain why this tea is a good fit for the user's specific request.
-3. If multiple teas fit, mention the top choice first.
+1. Identify the top {self.retrieval_n} best matching teas from the list above.
+2. Explain why each tea is a good fit for the user's specific request.
 
 Response:"""
 

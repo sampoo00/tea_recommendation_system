@@ -9,11 +9,15 @@ load_dotenv()
 class TeaChromaOpenAIRecommender:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         
         # Initialize ChromaDB (In-memory)
         self.chroma_client = chromadb.Client()
-        # We'll use a specific name for the collection
-        self.collection = self.chroma_client.get_or_create_collection(name="tea_inventory_openai")
+        # Use cosine similarity for better text search performance
+        self.collection = self.chroma_client.get_or_create_collection(
+            name="tea_inventory_openai",
+            metadata={"hnsw:space": "cosine"}
+        )
         
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
@@ -40,8 +44,8 @@ class TeaChromaOpenAIRecommender:
         metadatas = []
 
         for tea in self.teas:
-            # Create a rich text representation for embedding
-            content = f"Name: {tea['name']}. Type: {tea['type']}. Flavors: {', '.join(tea['flavors'])}. Description: {tea['description']}"
+            # Optimize data format into natural language sentences for the embedding model
+            content = f"The {tea['name']} is a {tea['type']} variety. It has a flavor profile featuring {', '.join(tea['flavors'])}. {tea['description']} This tea has a {tea['caffeine']} caffeine level."
             embedding = self.get_embedding(content)
             
             ids.append(tea['id'])
@@ -70,7 +74,7 @@ class TeaChromaOpenAIRecommender:
         # 2. Search ChromaDB
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=2
+            n_results=self.retrieval_n
         )
         
         # 3. Construct context from results

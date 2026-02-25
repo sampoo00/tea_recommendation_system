@@ -11,10 +11,14 @@ class TeaChromaRecommender:
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         
         # Initialize ChromaDB client (In-memory for this example)
         self.chroma_client = chromadb.Client()
-        self.collection = self.chroma_client.get_or_create_collection(name="tea_inventory")
+        self.collection = self.chroma_client.get_or_create_collection(
+            name="tea_inventory",
+            metadata={"hnsw:space": "cosine"}
+        )
         
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
@@ -25,11 +29,12 @@ class TeaChromaRecommender:
         with open(self.data_path, 'r') as f:
             return json.load(f)
 
-    def get_ollama_embedding(self, text):
-        """Generates embedding using Ollama's embedding API."""
+    def get_ollama_embedding(self, text, is_query=False):
+        """Generates embedding using Ollama's embedding API with instructional prefixes."""
+        prefix = "search_query: " if is_query else "search_document: "
         response = requests.post(
             f"{self.ollama_url}/api/embeddings",
-            json={"model": self.embedding_model, "prompt": text}
+            json={"model": self.embedding_model, "prompt": prefix + text}
         )
         response.raise_for_status()
         return response.json()["embedding"]
@@ -44,8 +49,9 @@ class TeaChromaRecommender:
         metadatas = []
 
         for tea in self.teas:
-            content = f"Name: {tea['name']}. Type: {tea['type']}. Flavors: {', '.join(tea['flavors'])}. Description: {tea['description']}"
-            embedding = self.get_ollama_embedding(content)
+            # Create a more descriptive natural language string for better embedding quality
+            content = f"{tea['name']} is a {tea['type']} tea. It features flavors like {', '.join(tea['flavors'])}. {tea['description']}"
+            embedding = self.get_ollama_embedding(content, is_query=False)
             
             ids.append(tea['id'])
             documents.append(content)
@@ -69,12 +75,12 @@ class TeaChromaRecommender:
     def recommend(self, user_query):
         """RAG pipeline: ChromaDB Retrieval -> Ollama Generation."""
         # 1. Embed Query
-        query_embedding = self.get_ollama_embedding(user_query)
+        query_embedding = self.get_ollama_embedding(user_query, is_query=True)
         
         # 2. Query ChromaDB
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=2
+            n_results=self.retrieval_n
         )
         
         # 3. Construct Context

@@ -9,6 +9,7 @@ load_dotenv()
 class TeaRecommenderOpenAI:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/openai/tea_data_final.json'
         self.load_data()
         
@@ -37,7 +38,7 @@ class TeaRecommenderOpenAI:
 
     def chat(self, user_input):
         # 1. Retrieve relevant tea blends
-        results = self.retrieve(user_input)
+        results = self.retrieve(user_input, k=self.retrieval_n)
         
         # 2. Construct context for LLM
         context = "Relevant Tea Blends:\n"

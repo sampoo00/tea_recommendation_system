@@ -11,6 +11,7 @@ class TeaRecommenderOllama:
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/ollama/tea_data_final.json'
         self.load_data()
         
@@ -42,7 +43,7 @@ class TeaRecommenderOllama:
         return [item[0] for item in similarities[:k]]
 
     def chat(self, user_input):
-        results = self.retrieve(user_input)
+        results = self.retrieve(user_input, k=self.retrieval_n)
         
         context = "Relevant Tea Blends:\n"
         for tea in results:

@@ -8,6 +8,7 @@ load_dotenv()
 class TeaRecommenderOpenAINLP:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
 
@@ -30,8 +31,8 @@ class TeaRecommenderOpenAINLP:
 User's Request: "{user_query}"
 
 Task:
-1. Identify the single best match from the inventory.
-2. Explain the flavor profile and why it matches the user's request.
+1. Identify the top {self.retrieval_n} best matches from the inventory.
+2. Explain the flavor profiles and why they match the user's request.
 3. Keep the tone friendly and elegant.
 
 Response:"""

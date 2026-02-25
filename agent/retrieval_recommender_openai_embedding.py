@@ -9,6 +9,7 @@ load_dotenv()
 class TeaEmbeddingSearcherOpenAI:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
         self.data_path = 'data/openai/tea_data_with_embeddings.json'
         self.teas = self._load_data()
 
@@ -62,7 +63,7 @@ def main():
             if user_input.lower() in ['exit', 'quit']:
                 break
             
-            recommendations = searcher.search(user_input)
+            recommendations = searcher.search(user_input, top_k=searcher.retrieval_n)
             
             print("\nTop Recommendations:")
             for i, rec in enumerate(recommendations, 1):
