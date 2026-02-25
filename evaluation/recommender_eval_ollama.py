@@ -1,34 +1,57 @@
 import json
 import os
 import sys
+import requests
 
 # Add project root to path to import agent
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from agent.retrieval_recommender_ollama import TeaRecommenderOllama
+from agent.retrieval_recommender_ollama_nlp_vectordb import TeaChromaRecommender
+
+def load_eval_context():
+    context_path = os.path.join(os.path.dirname(__file__), 'system_context_eval.txt')
+    if os.path.exists(context_path):
+        with open(context_path, 'r') as f:
+            return f.read().strip()
+    return "Output ONLY a JSON array of tea names."
 
 def evaluate():
     try:
-        recommender = TeaRecommenderOllama()
+        # Initialize the VectorDB based recommender
+        recommender = TeaChromaRecommender()
+        recommender.build_vectordb()
+        # Override system context for evaluation (JSON output)
+        recommender.system_context = load_eval_context()
     except Exception as e:
         print(f"Failed to initialize recommender: {e}")
         return
 
-    with open('evaluation/test_data.json', 'r') as f:
+    test_data_path = os.path.join(os.path.dirname(__file__), 'test_data.json')
+    with open(test_data_path, 'r') as f:
         test_data = json.load(f)
     
     total = len(test_data)
     correct = 0
     
-    print(f"Evaluating Ollama Recommender on {total} samples...")
+    print(f"Evaluating Ollama VectorDB Recommender (N={recommender.retrieval_n}) on {total} samples...")
     
     for item in test_data:
         query = item['query']
         expected = item['expected_names']
         
-        retrieved = recommender.retrieve(query, k=1)
-        retrieved_names = [t['name'] for t in retrieved]
+        # Get recommendation (should be JSON string due to eval context)
+        response_str = recommender.recommend(query)
         
-        is_correct = any(name in retrieved_names for name in expected)
+        try:
+            # Parse the JSON response
+            retrieved_names = json.loads(response_str)
+            if not isinstance(retrieved_names, list):
+                retrieved_names = [str(retrieved_names)]
+        except:
+            # Fallback if LLM fails to output valid JSON
+            retrieved_names = [response_str.strip()]
+        
+        # Success if any expected name is in the retrieved results
+        is_correct = any(exp in retrieved_names for exp in expected)
         if is_correct:
             correct += 1
         
@@ -40,7 +63,7 @@ def evaluate():
     
     precision = (correct / total) * 100
     print(f"Evaluation Complete.")
-    print(f"Precision@1: {precision:.2f}% ({correct}/{total})")
+    print(f"Precision@{recommender.retrieval_n}: {precision:.2f}% ({correct}/{total})")
 
 if __name__ == "__main__":
     evaluate()
