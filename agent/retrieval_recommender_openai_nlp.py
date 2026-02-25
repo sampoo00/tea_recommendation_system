@@ -9,8 +9,16 @@ class TeaRecommenderOpenAINLP:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
+
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a professional tea sommelier."
 
     def _load_data(self):
         """Loads the raw tea data from JSON."""
@@ -23,7 +31,7 @@ class TeaRecommenderOpenAINLP:
         """Uses OpenAI reasoning to find the best tea match from the inventory."""
         tea_list_str = json.dumps(self.teas, indent=2)
         
-        system_msg = "You are a professional tea sommelier. Use the provided tea inventory to help users find their perfect blend. Always recommend a tea that exists in the inventory."
+        system_msg = self.system_context
         
         prompt = f"""Inventory:
 {tea_list_str}

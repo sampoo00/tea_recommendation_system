@@ -10,6 +10,7 @@ class TeaChromaOpenAIRecommender:
     def __init__(self):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         
         # Initialize ChromaDB (In-memory)
         self.chroma_client = chromadb.Client()
@@ -21,6 +22,13 @@ class TeaChromaOpenAIRecommender:
         
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
+
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a professional tea sommelier."
 
     def _load_data(self):
         """Loads the raw tea data from JSON."""
@@ -84,15 +92,15 @@ class TeaChromaOpenAIRecommender:
             context += f"- {meta['name']} ({meta['type']}): {meta['description']} (Flavors: {meta['flavors']})\n"
 
         # 4. Generate recommendation using GPT-3.5
-        system_msg = "You are a professional tea sommelier. Use the provided context to help the user find their perfect tea."
+        system_msg = self.system_context
         prompt = f"""Context:
 {context}
 
 User's Request: "{user_query}"
 
 Task:
-- Recommend the best matching tea from the context.
-- Explain why it fits the user's request.
+- Recommend the top {self.retrieval_n} best matching teas from the context.
+- Explain why they fit the user's request.
 - Keep the response friendly and professional.
 
 Response:"""

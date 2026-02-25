@@ -12,6 +12,7 @@ class TeaChromaRecommender:
         self.ollama_model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         
         # Initialize ChromaDB client (In-memory for this example)
         self.chroma_client = chromadb.Client()
@@ -22,6 +23,13 @@ class TeaChromaRecommender:
         
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
+
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a helpful tea assistant."
 
     def _load_data(self):
         if not os.path.exists(self.data_path):
@@ -90,7 +98,7 @@ class TeaChromaRecommender:
             context += f"- {meta['name']} ({meta['type']}): {meta['description']} Flavors: {meta['flavors']}\n"
 
         # 4. Generate via Ollama
-        prompt = f"""You are a helpful tea assistant. Use the following tea information to answer the user's request.
+        prompt = f"""System: {self.system_context} Use the following tea information to answer the user's request.
 
 Context:
 {context}
@@ -98,7 +106,7 @@ Context:
 User's Request: "{user_query}"
 
 Instructions:
-- Recommend the best tea from the provided context.
+- Recommend the top {self.retrieval_n} teas from the provided context.
 - Keep the response concise and friendly.
 
 Response:"""

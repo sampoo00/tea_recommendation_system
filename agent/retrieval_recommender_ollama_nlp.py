@@ -10,8 +10,16 @@ class TeaRecommenderOllamaNLP:
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
+
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a professional tea sommelier."
 
     def _load_data(self):
         """Loads the raw tea data from JSON."""
@@ -25,7 +33,7 @@ class TeaRecommenderOllamaNLP:
         tea_list_str = json.dumps(self.teas, indent=2)
         
         # We provide the full context to the LLM to act as a 'searchable database'
-        prompt = f"""You are a professional tea sommelier. Below is our current inventory of tea blends:
+        prompt = f"""System: {self.system_context} Below is our current inventory of tea blends:
 
 {tea_list_str}
 

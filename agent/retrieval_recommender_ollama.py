@@ -12,9 +12,17 @@ class TeaRecommenderOllama:
         self.model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         self.data_path = 'data/ollama/tea_data_final.json'
         self.load_data()
         
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a helpful tea recommender."
+
     def load_data(self):
         if not os.path.exists(self.data_path):
             raise FileNotFoundError(f"Data file not found: {self.data_path}. Please run data preparation scripts.")
@@ -49,7 +57,7 @@ class TeaRecommenderOllama:
         for tea in results:
             context += f"- {tea['name']}: {tea['description']} (Flavors: {', '.join(tea['flavors'])})\n"
             
-        prompt = f"""System: You are TeaBot, a helpful tea recommender. Use the following context to recommend tea to the user. Keep it conversational and friendly.
+        prompt = f"""System: {self.system_context} Use the following context to recommend exactly {self.retrieval_n} teas to the user.
 
 Context:
 {context}

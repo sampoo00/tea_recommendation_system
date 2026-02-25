@@ -11,8 +11,16 @@ class TeaEmbeddingSearcher:
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
         self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.system_context = self._load_system_context()
         self.data_path = 'data/ollama/tea_data_with_embeddings.json'
         self.teas = self._load_data()
+
+    def _load_system_context(self):
+        context_path = os.path.join(os.path.dirname(__file__), 'system_context.txt')
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                return f.read().strip()
+        return "You are a helpful tea searcher."
 
     def _load_data(self):
         """Loads the tea data with pre-computed embeddings."""
