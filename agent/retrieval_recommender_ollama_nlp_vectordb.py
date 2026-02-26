@@ -7,11 +7,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class TeaChromaRecommender:
-    def __init__(self):
+    def __init__(self, retrieval_n=None):
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.ollama_model = os.getenv("OLLAMA_MODEL", "gpt-oss:20b")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
-        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.retrieval_n = int(retrieval_n) if retrieval_n is not None else int(os.getenv("RETRIEVAL_N", "3"))
         self.system_context = self._load_system_context()
         
         # Initialize ChromaDB client (In-memory for this example)

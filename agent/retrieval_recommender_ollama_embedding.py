@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class TeaEmbeddingSearcher:
-    def __init__(self):
+    def __init__(self, retrieval_n=None):
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "nomic-embed-text")
-        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.retrieval_n = int(retrieval_n) if retrieval_n is not None else int(os.getenv("RETRIEVAL_N", "3"))
         self.system_context = self._load_system_context()
         self.data_path = 'data/ollama/tea_data_with_embeddings.json'
         self.teas = self._load_data()

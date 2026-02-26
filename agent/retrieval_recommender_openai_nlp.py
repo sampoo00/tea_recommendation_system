@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class TeaRecommenderOpenAINLP:
-    def __init__(self):
+    def __init__(self, retrieval_n=None):
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.retrieval_n = int(os.getenv("RETRIEVAL_N", "3"))
+        self.retrieval_n = int(retrieval_n) if retrieval_n is not None else int(os.getenv("RETRIEVAL_N", "3"))
         self.system_context = self._load_system_context()
         self.data_path = 'data/mock_tea_data.json'
         self.teas = self._load_data()
