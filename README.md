@@ -7,6 +7,7 @@ TeaBot is a Retrieval-Augmented Generation (RAG) based recommendation system des
 This project is organized into the following specialized directories:
 
 - [**`agent/`**](./agent/): Contains multiple recommendation engine implementations. Includes local (Ollama) and cloud (OpenAI) versions, using NLP reasoning, manual RAG, or ChromaDB-backed vector search.
+- [**`backend/`**](./backend/): FastAPI-based Web Application Servers (WAS) for both Ollama and OpenAI models. Provides RESTful API endpoints for tea recommendations.
 - [**`data/`**](./data/): The knowledge base. Stores the raw tea data (`mock_tea_data.json`) and scripts to generate embeddings for both local and cloud environments.
 - [**`evaluation/`**](./evaluation/): Quantitative benchmarking tools. Measures Precision@N, Average Similarity, and Prediction Rates to verify the system's accuracy.
 - [**`test/`**](./test/): Health check utilities to verify service connectivity (e.g., Ollama server status).
@@ -46,9 +47,30 @@ python3 data/openai/embed_documents_openai.py
 
 ## Usage
 
+### 1. Interactive CLI Agents
 Run any of the agents from the root directory. For example, to use the most advanced local agent:
 ```bash
 python3 agent/retrieval_recommender_ollama_nlp_vectordb.py
+```
+
+### 2. Backend API (FastAPI)
+You can also run TeaBot as a web service:
+
+**Ollama Version (Port 8000):**
+```bash
+python3 backend/main_ollama.py
+```
+
+**OpenAI Version (Port 8001):**
+```bash
+python3 backend/main_openai.py
+```
+
+**API Request Example:**
+```bash
+curl -X POST http://localhost:8000/recommend \
+     -H "Content-Type: application/json" \
+     -d '{"query": "I want something citrusy and bold."}'
 ```
 
 For more details on the different agent types, see the [Agent README](./agent/README.md).
